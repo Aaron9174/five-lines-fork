@@ -112,36 +112,56 @@ function update() {
   }
 }
 
+function createGraphics(): CanvasRenderingContext2D {
+  let canvas = <HTMLCanvasElement>document.getElementById("GameCanvas");
+  let canvasContext: CanvasRenderingContext2D = canvas.getContext("2d");
+  canvasContext.clearRect(0, 0, canvas.width, canvas.height);
+  return canvasContext;
+}
+
+/**
+ * Refreshs and draws the canvas
+ */
 function draw() {
-  let canvas = document.getElementById("GameCanvas") as HTMLCanvasElement;
-  let g = canvas.getContext("2d");
+  let canvasContext: CanvasRenderingContext2D = createGraphics();
+  drawMap(canvasContext);
+  drawPlayer(canvasContext);
+}
 
-  g.clearRect(0, 0, canvas.width, canvas.height);
+/**
+ * Draws the map
+ * @param canvasContext - The canvas to update
+ */
+function drawMap(canvasContext: CanvasRenderingContext2D) {
 
-  // Draw map
   for (let y = 0; y < map.length; y++) {
     for (let x = 0; x < map[y].length; x++) {
       if (map[y][x] === Tile.FLUX)
-        g.fillStyle = "#ccffcc";
+        canvasContext.fillStyle = "#ccffcc";
       else if (map[y][x] === Tile.UNBREAKABLE)
-        g.fillStyle = "#999999";
+        canvasContext.fillStyle = "#999999";
       else if (map[y][x] === Tile.STONE || map[y][x] === Tile.FALLING_STONE)
-        g.fillStyle = "#0000cc";
+        canvasContext.fillStyle = "#0000cc";
       else if (map[y][x] === Tile.BOX || map[y][x] === Tile.FALLING_BOX)
-        g.fillStyle = "#8b4513";
+        canvasContext.fillStyle = "#8b4513";
       else if (map[y][x] === Tile.KEY1 || map[y][x] === Tile.LOCK1)
-        g.fillStyle = "#ffcc00";
+        canvasContext.fillStyle = "#ffcc00";
       else if (map[y][x] === Tile.KEY2 || map[y][x] === Tile.LOCK2)
-        g.fillStyle = "#00ccff";
+        canvasContext.fillStyle = "#00ccff";
 
       if (map[y][x] !== Tile.AIR && map[y][x] !== Tile.PLAYER)
-        g.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+        canvasContext.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
     }
   }
+}
 
-  // Draw player
-  g.fillStyle = "#ff0000";
-  g.fillRect(playerx * TILE_SIZE, playery * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+/**
+ * Draws the player
+ * @param canvasContext - The canvas to update
+ */
+function drawPlayer(canvasContext: CanvasRenderingContext2D) {
+  canvasContext.fillStyle = "#ff0000";
+  canvasContext.fillRect(playerx * TILE_SIZE, playery * TILE_SIZE, TILE_SIZE, TILE_SIZE);
 }
 
 function gameLoop() {
