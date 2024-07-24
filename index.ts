@@ -81,8 +81,18 @@ function moveVertical(dy: number) {
 }
 
 function update() {
+  processInputs();
+  updateMap();
+}
+
+function processInputs() {
   while (inputs.length > 0) {
-    let current = inputs.pop();
+    let current: Input = inputs.pop();
+    performMove(current);
+  }
+}
+
+function performMove(current: Input) {
     if (current === Input.LEFT)
       moveHorizontal(-1);
     else if (current === Input.RIGHT)
@@ -91,25 +101,45 @@ function update() {
       moveVertical(-1);
     else if (current === Input.DOWN)
       moveVertical(1);
-  }
+}
 
+function updateMap() {
   for (let y = map.length - 1; y >= 0; y--) {
     for (let x = 0; x < map[y].length; x++) {
-      if ((map[y][x] === Tile.STONE || map[y][x] === Tile.FALLING_STONE)
-        && map[y + 1][x] === Tile.AIR) {
-        map[y + 1][x] = Tile.FALLING_STONE;
-        map[y][x] = Tile.AIR;
-      } else if ((map[y][x] === Tile.BOX || map[y][x] === Tile.FALLING_BOX)
-        && map[y + 1][x] === Tile.AIR) {
-        map[y + 1][x] = Tile.FALLING_BOX;
-        map[y][x] = Tile.AIR;
-      } else if (map[y][x] === Tile.FALLING_STONE) {
-        map[y][x] = Tile.STONE;
-      } else if (map[y][x] === Tile.FALLING_BOX) {
-        map[y][x] = Tile.BOX;
-      }
+      updateBlock(y, x);
     }
   }
+}
+
+function updateBlock(y: number, x: number): void {
+  if (isFallingStone(y, x)) {
+    map[y + 1][x] = Tile.FALLING_STONE;
+    map[y][x] = Tile.AIR;
+  } else if (isFallingBox(y, x)) {
+    map[y + 1][x] = Tile.FALLING_BOX;
+    map[y][x] = Tile.AIR;
+  } else if (isStationaryStone(y, x)) {
+    map[y][x] = Tile.STONE;
+  } else if (isStationaryBox(y, x)) {
+    map[y][x] = Tile.BOX;
+  }
+}
+
+function isFallingStone(y: number, x: number): boolean {
+  return (map[y][x] === Tile.STONE || map[y][x] === Tile.FALLING_STONE)
+      && map[y + 1][x] === Tile.AIR;
+}
+
+function isFallingBox(y: number, x: number): boolean {
+  return (map[y][x] === Tile.BOX || map[y][x] === Tile.FALLING_BOX) && map[y + 1][x] === Tile.AIR;
+}
+
+function isStationaryStone(y: number, x: number): boolean {
+  return (map[y][x] === Tile.FALLING_STONE || map[y][x] === Tile.STONE) && map[y + 1][x] !== Tile.AIR;
+}
+
+function isStationaryBox(y: number, x: number): boolean {
+  return (map[y][x] === Tile.FALLING_BOX || map[y][x] === Tile.BOX) && map[y + 1][x] !== Tile.AIR;
 }
 
 function createGraphics(): CanvasRenderingContext2D {
