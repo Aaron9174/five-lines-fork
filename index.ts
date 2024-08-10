@@ -190,6 +190,7 @@ class Box implements Tile {
   moveHorizontal(dx: number): void {
     if (map[playery][playerx + dx + dx].isAir()
     && !map[playery + 1][playerx + dx].isAir()) {
+      map[playery][playerx + dx +dx] = map[playery][playerx + dx];
       moveToTile(playerx + dx, playery);
     }
   }
