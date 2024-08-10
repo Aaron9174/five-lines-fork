@@ -489,10 +489,6 @@ function draw() {
   drawPlayer(canvasContext);
 }
 
-function colorOfTile(g: CanvasRenderingContext2D, x: number, y: number) {
-  map[y][x].color(g);
-}
-
 /**
  * Draws the map
  * @param canvasContext - The canvas to update
@@ -500,7 +496,7 @@ function colorOfTile(g: CanvasRenderingContext2D, x: number, y: number) {
 function drawMap(canvasContext: CanvasRenderingContext2D) {
   for (let y = 0; y < map.length; y++) {
     for (let x = 0; x < map[y].length; x++) {
-      colorOfTile(canvasContext, x, y);
+      map[y][x].color(canvasContext);
       if (!map[y][x].isAir() && !map[y][x].isPlayer())
         canvasContext.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
     }
