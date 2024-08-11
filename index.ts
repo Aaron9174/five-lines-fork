@@ -201,7 +201,7 @@ class Box implements Tile {
   moveHorizontal(dx: number): void {
     if (map[playery][playerx + dx + dx].isAir()
     && !map[playery + 1][playerx + dx].isAir()) {
-      map[playery][playerx + dx +dx] = map[playery][playerx + dx];
+      map[playery][playerx + dx + dx] = map[playery][playerx + dx];
       moveToTile(playerx + dx, playery);
     }
   }
@@ -506,12 +506,12 @@ function handleInput2(current: Input) {
 function updateMap() {
   for (let y = map.length - 1; y >= 0; y--) {
     for (let x = 0; x < map[y].length; x++) {
-      updateBlock(y, x);
+      updateTile(y, x);
     }
   }
 }
 
-function updateBlock(y: number, x: number): void {
+function updateTile(y: number, x: number): void {
   if (isFallingStone(y, x)) {
     map[y + 1][x] = new FallingStone();
     map[y][x] = new Air();
