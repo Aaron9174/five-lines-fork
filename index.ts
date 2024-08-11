@@ -14,22 +14,19 @@ enum RawTile {
   KEY2, LOCK2,
 }
 
+enum FallingState {
+  FALLING, RESTING,
+}
+
 interface Tile {
   isAir(): boolean;
-  isFlux(): boolean;
-  isUnbreakable(): boolean;
-  isPlayer(): boolean;
   isStone(): boolean;
   isFallingStone(): boolean;
   isBox(): boolean;
   isFallingBox(): boolean;
-  isKey1(): boolean;
   isLock1(): boolean;
-  isKey2(): boolean;
   isLock2(): boolean;
   draw(g: CanvasRenderingContext2D, y: number, x: number): void;
-  isEdible(): boolean;
-  isPushable(): boolean;
   moveHorizontal(dx: number): void;
   moveVertical(dy: number): void;
 }
@@ -114,7 +111,7 @@ class Player implements Tile {
   isUnbreakable(): boolean { return false; }
   isPlayer(): boolean { return true; }
   isStone(): boolean { return false; }
-  isFallingStone(): boolean { return false; }
+  isFallingStone(): boolean { return false }
   isBox(): boolean { return false; }
   isFallingBox(): boolean { return false; }
   isKey1(): boolean { return false; }
@@ -129,12 +126,13 @@ class Player implements Tile {
 }
 
 class Stone implements Tile {
+  constructor(private isFalling: FallingState) {}
   isAir(): boolean { return false; }
   isFlux(): boolean { return false; }
   isUnbreakable(): boolean { return false; }
   isPlayer(): boolean { return false; }
   isStone(): boolean { return true; }
-  isFallingStone(): boolean { return false; }
+  isFallingStone(): boolean { return this.isFalling === FallingState.FALLING; }
   isBox(): boolean { return false; }
   isFallingBox(): boolean { return false; }
   isKey1(): boolean { return false; }
@@ -148,34 +146,15 @@ class Stone implements Tile {
   isEdible(): boolean { return false; }
   isPushable(): boolean { return true; }
   moveHorizontal(dx: number): void {
+    if (this.isFalling) {
+      return;
+    }
+
     if (map[playery][playerx + dx + dx].isAir()
     && !map[playery + 1][playerx + dx].isAir()) {
       moveToTile(playerx + dx, playery);
     }
   }
-  moveVertical(dy: number): void {}
-}
-
-class FallingStone implements Tile {
-  isAir(): boolean { return false; }
-  isFlux(): boolean { return false; }
-  isUnbreakable(): boolean { return false; }
-  isPlayer(): boolean { return false; }
-  isStone(): boolean { return false; }
-  isFallingStone(): boolean { return true; }
-  isBox(): boolean { return false; }
-  isFallingBox(): boolean { return false; }
-  isKey1(): boolean { return false; }
-  isLock1(): boolean { return false; }
-  isKey2(): boolean { return false; }
-  isLock2(): boolean { return false; }
-  draw(g: CanvasRenderingContext2D, y: number, x: number): void {
-    g.fillStyle = "#0000cc";
-    g.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
-  }
-  isEdible(): boolean { return false; }
-  isPushable(): boolean { return false; }
-  moveHorizontal(dx: number): void {}
   moveVertical(dy: number): void {}
 }
 
@@ -419,9 +398,9 @@ function transformTile(tile: RawTile): Tile {
     case RawTile.PLAYER:
       return new Player();
     case RawTile.STONE:
-      return new Stone();
+      return new Stone(FallingState.RESTING);
     case RawTile.FALLING_STONE:
-      return new FallingStone();
+      return new Stone(FallingState.FALLING);
     case RawTile.BOX:
       return new Box();
     case RawTile.FALLING_BOX:
@@ -513,20 +492,24 @@ function updateMap() {
 
 function updateTile(y: number, x: number): void {
   if (isFallingStone(y, x)) {
-    map[y + 1][x] = new FallingStone();
+    map[y + 1][x] = new Stone(FallingState.FALLING);
     map[y][x] = new Air();
   } else if (isFallingBox(y, x)) {
     map[y + 1][x] = new FallingBox();
     map[y][x] = new Air();
   } else if (isStationaryStone(y, x)) {
-    map[y][x] = new Stone();
+    map[y][x] = new Stone(FallingState.RESTING);
   } else if (isStationaryBox(y, x)) {
     map[y][x] = new Box();
   }
 }
 
+function isStoney(y: number, x: number): boolean {
+  return map[y][x].isStone() || map[y][x].isFallingStone();
+}
+
 function isFallingStone(y: number, x: number): boolean {
-  return (map[y][x].isStone() || map[y][x].isFallingStone())
+  return isStoney(y, x)
       && map[y + 1][x].isAir();
 }
 
