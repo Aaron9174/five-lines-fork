@@ -137,13 +137,13 @@ class Player implements Tile {
 }
 
 class Stone implements Tile {
-  constructor(private isFalling: FallingState) {}
+  constructor(private fallingState: FallingState) {}
   isAir(): boolean { return false; }
   isFlux(): boolean { return false; }
   isUnbreakable(): boolean { return false; }
   isPlayer(): boolean { return false; }
   isStone(): boolean { return true; }
-  isFallingStone(): boolean { return this.isFalling.isFalling(); }
+  isFallingStone(): boolean { return this.fallingState.isFalling(); }
   isBox(): boolean { return false; }
   isFallingBox(): boolean { return false; }
   isKey1(): boolean { return false; }
@@ -157,7 +157,7 @@ class Stone implements Tile {
   isEdible(): boolean { return false; }
   isPushable(): boolean { return true; }
   moveHorizontal(dx: number): void {
-    if (this.isFalling) {
+    if (this.fallingState.isFalling()) {
       return;
     }
 
@@ -170,6 +170,7 @@ class Stone implements Tile {
 }
 
 class Box implements Tile {
+  constructor(private fallingState: FallingState) {}
   isAir(): boolean { return false; }
   isFlux(): boolean { return false; }
   isUnbreakable(): boolean { return false; }
@@ -177,7 +178,7 @@ class Box implements Tile {
   isStone(): boolean { return false; }
   isFallingStone(): boolean { return false; }
   isBox(): boolean { return true; }
-  isFallingBox(): boolean { return false; }
+  isFallingBox(): boolean { return this.fallingState.isFalling(); }
   isKey1(): boolean { return false; }
   isLock1(): boolean { return false; }
   isKey2(): boolean { return false; }
@@ -189,35 +190,15 @@ class Box implements Tile {
   isEdible(): boolean { return false; }
   isPushable(): boolean { return true; }
   moveHorizontal(dx: number): void {
+    if (this.fallingState.isFalling()) {
+      return;
+    }
     if (map[playery][playerx + dx + dx].isAir()
     && !map[playery + 1][playerx + dx].isAir()) {
       map[playery][playerx + dx + dx] = map[playery][playerx + dx];
       moveToTile(playerx + dx, playery);
     }
   }
-  moveVertical(dy: number): void {}
-}
-
-class FallingBox implements Tile {
-  isAir(): boolean { return false; }
-  isFlux(): boolean { return false; }
-  isUnbreakable(): boolean { return false; }
-  isPlayer(): boolean { return false; }
-  isStone(): boolean { return false; }
-  isFallingStone(): boolean { return false; }
-  isBox(): boolean { return false; }
-  isFallingBox(): boolean { return true; }
-  isKey1(): boolean { return false; }
-  isLock1(): boolean { return false; }
-  isKey2(): boolean { return false; }
-  isLock2(): boolean { return false; }
-  draw(g: CanvasRenderingContext2D, y: number, x: number): void {
-    g.fillStyle = "#8b4513";
-    g.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
-  }
-  isEdible(): boolean { return false; }
-  isPushable(): boolean { return false; }
-  moveHorizontal(dx: number): void {}
   moveVertical(dy: number): void {}
 }
 
@@ -413,9 +394,9 @@ function transformTile(tile: RawTile): Tile {
     case RawTile.FALLING_STONE:
       return new Stone(new Falling());
     case RawTile.BOX:
-      return new Box();
+      return new Box(new Resting());
     case RawTile.FALLING_BOX:
-      return new FallingBox();
+      return new Box(new Falling());
     case RawTile.KEY1:
       return new Key1();
     case RawTile.LOCK1:
@@ -506,12 +487,12 @@ function updateTile(y: number, x: number): void {
     map[y + 1][x] = new Stone(new Falling());
     map[y][x] = new Air();
   } else if (isFallingBox(y, x)) {
-    map[y + 1][x] = new FallingBox();
+    map[y + 1][x] = new Box(new Falling());
     map[y][x] = new Air();
   } else if (isStationaryStone(y, x)) {
     map[y][x] = new Stone(new Resting());
   } else if (isStationaryBox(y, x)) {
-    map[y][x] = new Box();
+    map[y][x] = new Box(new Resting());
   }
 }
 
@@ -524,8 +505,12 @@ function isFallingStone(y: number, x: number): boolean {
       && map[y + 1][x].isAir();
 }
 
+function isBoxy(y: number, x: number): boolean {
+  return map[y][x].isBox() || map[y][x].isFallingBox();
+}
+
 function isFallingBox(y: number, x: number): boolean {
-  return (map[y][x].isBox() || map[y][x].isFallingBox()) && map[y + 1][x].isAir();
+  return (isBoxy(y, x)) && map[y + 1][x].isAir();
 }
 
 function isStationaryStone(y: number, x: number): boolean {
